@@ -1,4 +1,5 @@
 from Vector import Vector
+import random
 
 
 def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
@@ -15,6 +16,8 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
     test_validation(k=k, n=n, d=d, max_iter=max_iter)
 
     vector_list = convert_to_vectors(input_data=input_data)
+
+    centroids = initialize_centroids(vector_list=vector_list, k=k)
 
 
 def test_validation(k: int, n: int, d: int, max_iter: int):
@@ -52,6 +55,16 @@ def convert_to_vectors(input_data):
         vectors.append(vector)
 
     return vectors
+
+
+def initialize_centroids(vector_list: list, k: int):
+    """
+    randomly choose vectors to initialize centroids.
+    :param vector_list: vector list of Vector Class
+    :param k: number of clustering
+    :return: random sample data vectors from a vector list
+    """
+    return random.sample(vector_list, k)
 
 
 def main():
