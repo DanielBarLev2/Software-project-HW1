@@ -26,6 +26,13 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
 
         updated_centroids_list = update_centroids(vector_list=vector_list, d=d, k=k)
 
+        if is_converged(centroids_list=centroids_list, updated_centroids_list=updated_centroids_list):
+            break
+        centroids_list = updated_centroids_list
+
+    for index in range(len(centroids_list)):
+        print(centroids_list[index])
+
 
 def test_validation(k: int, n: int, d: int, max_iter: int):
     """
@@ -48,7 +55,7 @@ def test_validation(k: int, n: int, d: int, max_iter: int):
         raise Exception("Invalid maximum iteration!")
 
 
-def convert_to_vectors(input_data):
+def convert_to_vectors(input_data) -> list:
     """
     convert rows from a text file, line by line to a Vector Class instances.
     :param input_data: text file containing the data; assuming a valid
@@ -64,7 +71,7 @@ def convert_to_vectors(input_data):
     return vectors
 
 
-def initialize_centroids(vector_list: list, k: int):
+def initialize_centroids(vector_list: list, k: int) -> list:
     """
     randomly choose vectors to initialize centroids.
     :param vector_list: vector list of Vector Class
@@ -74,7 +81,7 @@ def initialize_centroids(vector_list: list, k: int):
     return random.sample(vector_list, k)
 
 
-def compute_min_distance(vector: Vector, centroids_list: list):
+def compute_min_distance(vector: Vector, centroids_list: list) -> float:
     """
     computes the distances to all centroids.
     :param vector: vector
@@ -93,7 +100,7 @@ def compute_min_distance(vector: Vector, centroids_list: list):
     return min_distance
 
 
-def update_centroids(vector_list: list, d: int, k: int):
+def update_centroids(vector_list: list, d: int, k: int) -> list:
     """
     compute the mean of each vector cluster
     :param vector_list: vector list of Vector Class
@@ -118,6 +125,20 @@ def update_centroids(vector_list: list, d: int, k: int):
         updated_centroids_list[index] = round(updated_centroids_list[index] * (1 / k_numbers[index]), 4)
 
     return updated_centroids_list
+
+
+def is_converged(centroids_list: list, updated_centroids_list: list) -> bool:
+    """
+    check if the cluster mean point is converged.
+    :param centroids_list: centroids list
+    :param updated_centroids_list: new centroids list
+    :return: true if the lists are equal.
+    """
+    for index in range(len(centroids_list)):
+
+        if centroids_list[index].__eq__(updated_centroids_list[index]):
+            return False
+    return True
 
 
 def main():
