@@ -24,7 +24,7 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
         for vector in vector_list:
             compute_min_distance(vector=vector, centroids_list=centroids_list)
 
-        updated_centroids_list = update_centroids(vector_list=vector_list, centroids_list=centroids_list, d=d, k=k)
+        updated_centroids_list = update_centroids(vector_list=vector_list, d=d, k=k)
 
 
 def test_validation(k: int, n: int, d: int, max_iter: int):
