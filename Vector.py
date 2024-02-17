@@ -1,6 +1,10 @@
+import math
+
+
 class Vector:
     def __init__(self, *components):
         self.components = list(components)
+        self.cluster = None
 
     def __repr__(self):
         return f"Vector{tuple(self.components)}"
@@ -23,3 +27,13 @@ class Vector:
 
     def __rmul__(self, scalar):
         return self.__mul__(scalar)
+
+    def sum(self):
+        return sum(self.components)
+
+    def __pow__(self, power, modulo=None):
+        powered_components = [x ** power for x in self.components]
+        return Vector(*powered_components)
+
+    def euclidean_distance(self, other):
+        return ((self.__sub__(other) ** 2).sum()) ** 0.5

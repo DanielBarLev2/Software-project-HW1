@@ -17,7 +17,9 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
 
     vector_list = convert_to_vectors(input_data=input_data)
 
-    centroids = initialize_centroids(vector_list=vector_list, k=k)
+    centroids_list = initialize_centroids(vector_list=vector_list, k=k)
+
+    compute_min_distance(vector=vector_list[0], centroids_list=centroids_list)
 
 
 def test_validation(k: int, n: int, d: int, max_iter: int):
@@ -65,6 +67,16 @@ def initialize_centroids(vector_list: list, k: int):
     :return: random sample data vectors from a vector list
     """
     return random.sample(vector_list, k)
+
+
+def compute_min_distance(vector: Vector, centroids_list: list):
+    min_distance = float('inf')
+    for centroid in centroids_list:
+        distance = vector.euclidean_distance(centroid)
+
+        if distance < min_distance:
+            min_distance = distance
+    return min_distance
 
 
 def main():
