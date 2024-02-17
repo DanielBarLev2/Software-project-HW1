@@ -1,13 +1,11 @@
-import math
-
 
 class Vector:
     def __init__(self, *components):
         self.components = list(components)
-        self.cluster = None
+        self.centroid = None
 
     def __repr__(self):
-        return f"Vector{tuple(self.components)}"
+        return f"Vector{tuple(self.components)}; centroid {self.centroid}"
 
     def __add__(self, other):
         if len(self.components) != len(other.components):
@@ -28,12 +26,21 @@ class Vector:
     def __rmul__(self, scalar):
         return self.__mul__(scalar)
 
-    def sum(self):
-        return sum(self.components)
-
     def __pow__(self, power, modulo=None):
         powered_components = [x ** power for x in self.components]
         return Vector(*powered_components)
 
+    def __round__(self, n=0):
+        rounded_components = [round(x, n) for x in self.components]
+        return Vector(*rounded_components)
+
+    def __eq__(self, other):
+        if not isinstance(other, Vector):
+            return False
+        return self.components == other.components
+
     def euclidean_distance(self, other):
         return ((self.__sub__(other) ** 2).sum()) ** 0.5
+
+    def sum(self):
+        return sum(self.components)

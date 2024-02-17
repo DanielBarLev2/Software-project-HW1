@@ -19,7 +19,12 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
 
     centroids_list = initialize_centroids(vector_list=vector_list, k=k)
 
-    compute_min_distance(vector=vector_list[0], centroids_list=centroids_list)
+    for iter in range(max_iter):
+
+        for vector in vector_list:
+            compute_min_distance(vector=vector, centroids_list=centroids_list)
+
+        updated_centroids_list = update_centroids(vector_list=vector_list, centroids_list=centroids_list, d=d, k=k)
 
 
 def test_validation(k: int, n: int, d: int, max_iter: int):
@@ -70,13 +75,49 @@ def initialize_centroids(vector_list: list, k: int):
 
 
 def compute_min_distance(vector: Vector, centroids_list: list):
+    """
+    computes the distances to all centroids.
+    :param vector: vector
+    :param centroids_list: centroids list
+    :return: the closest centroid number
+    """
     min_distance = float('inf')
-    for centroid in centroids_list:
+
+    for index, centroid in enumerate(centroids_list):
         distance = vector.euclidean_distance(centroid)
 
         if distance < min_distance:
             min_distance = distance
+            vector.centroid = index
+
     return min_distance
+
+
+def update_centroids(vector_list: list, d: int, k: int):
+    """
+    compute the mean of each vector cluster
+    :param vector_list: vector list of Vector Class
+    :param d: data dimension
+    :param k: number of a clustering
+    :return: new centroid vector list according to the mean of each cluster data point
+    """
+    updated_centroids_list = []
+    k_numbers = [0] * k
+
+    # init mean centroids
+    for vector in range(k):
+        updated_centroids_list.append(Vector(*([0] * d)))
+
+    # sum all vectors coordinates
+    for vector in vector_list:
+        updated_centroids_list[vector.centroid] += vector
+        k_numbers[vector.centroid] += 1
+
+    # calculate mean
+    for index in range(k):
+        updated_centroids_list[index] = round(updated_centroids_list[index] * (1 / k_numbers[index]), 4)
+
+    return updated_centroids_list
 
 
 def main():
