@@ -1,5 +1,4 @@
 from Vector import Vector
-import random
 
 
 def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
@@ -15,10 +14,12 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
 
     test_validation(k=k, n=n, d=d, max_iter=max_iter)
 
-    vector_list = convert_to_vectors(input_data=input_data)
+    # select the first k elements and assign them as centroids
+    vector_list = input_data[:k]
 
     centroids_list = initialize_centroids(vector_list=vector_list, k=k)
 
+    # mainloop
     for iter in range(max_iter):
 
         for vector in vector_list:
@@ -30,6 +31,7 @@ def k_mean(k: int, n: int, d: int, input_data, max_iter=200):
             break
         centroids_list = updated_centroids_list
 
+    # print the centroid points
     for index in range(len(centroids_list)):
         print(centroids_list[index])
 
@@ -78,7 +80,7 @@ def initialize_centroids(vector_list: list, k: int) -> list:
     :param k: number of clustering
     :return: random sample data vectors from a vector list
     """
-    return random.sample(vector_list, k)
+    return vector_list[:k]
 
 
 def compute_min_distance(vector: Vector, centroids_list: list) -> float:
@@ -136,15 +138,6 @@ def is_converged(centroids_list: list, updated_centroids_list: list) -> bool:
     """
     for index in range(len(centroids_list)):
 
-        if centroids_list[index].__eq__(updated_centroids_list[index]):
+        if not centroids_list[index].__eq__(updated_centroids_list[index]):
             return False
     return True
-
-
-def main():
-    with open('input_1.txt', 'r') as file:
-        k_mean(k=3, n=800, d=3, input_data=file, max_iter=600)
-
-
-if __name__ == '__main__':
-    main()

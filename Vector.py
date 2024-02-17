@@ -1,11 +1,14 @@
 
 class Vector:
+    """
+        this class represents a vector, and it has a special "centroid" field for clustering.
+    """
     def __init__(self, *components):
         self.components = list(components)
         self.centroid = None
 
     def __repr__(self):
-        return f"Vector{tuple(self.components)}; centroid {self.centroid}"
+        return f"{', '.join(map(str, self.components))}"
 
     def __add__(self, other):
         if len(self.components) != len(other.components):
