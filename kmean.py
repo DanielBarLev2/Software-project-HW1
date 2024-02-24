@@ -53,7 +53,7 @@ def test_validation(k: int, n: int, d: int, max_iter: int):
     if not (type(d) is int):
         raise Exception("Invalid dimension of point!")
 
-    if not ((1 < max_iter < 1000) or (type(d) is int)):
+    if not (1 < max_iter < 1000):
         raise Exception("Invalid maximum iteration!")
 
 
