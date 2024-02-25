@@ -1,30 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "Vector.h" // Include the Vector header file
+#include "vector.h" // Include the Vector header file
 
-typedef struct {
-    float *components;
-    int dimension;
-    int centroid;
-} Vector;
 
 // Function to create a new Vector
 Vector createVector(int dimension, float *values) {
     Vector vec;
     vec.dimension = dimension;
     vec.centroid = -1; // Initialize centroid to -1 (indicating not assigned)
-    vec.components = (float *)malloc(dimension * sizeof(float));
     
-    if (vec.components == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
-        exit(EXIT_FAILURE);
+    if (values == NULL)
+        vec.components = (float *)calloc(dimension * sizeof(float), 0);
+    else{
+        for (int i = 0; i < dimension; i++) {
+            vec.components[i] = values[i];
+        }
     }
-    
-    for (int i = 0; i < dimension; i++) {
-        vec.components[i] = values[i];
-    }
-    
     return vec;
 }
 
