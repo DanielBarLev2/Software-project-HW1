@@ -11,8 +11,9 @@ Vector createVector(int dimension, float *values) {
     vec.centroid = -1; // Initialize centroid to -1 (indicating not assigned)
     
     if (values == NULL)
-        vec.components = (float *)calloc(dimension * sizeof(float), 0);
+        vec.components = (float *)calloc(dimension * sizeof(float), 0.0000f);
     else{
+        vec.components = (float *)malloc(dimension * sizeof(float));
         for (int i = 0; i < dimension; i++) {
             vec.components[i] = values[i];
         }
