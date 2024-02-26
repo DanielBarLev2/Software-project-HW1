@@ -134,7 +134,6 @@ void computeMinDistance(Vector *vectorList, Vector *centroids_list, int k, int n
 Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
 
     // Allocate memory for the updated centroids list
-   
     Vector *updatedCentroidsList = (Vector *)malloc(k * sizeof(Vector));
     if (updatedCentroidsList == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -171,12 +170,19 @@ Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
         }
     }
 
-    // Print the array of vectors
-    for (int i = 0; i < k; i++) {
-            printf("Centroid %d (", i + 1);
-            printVector(updatedCentroidsList[i]);
-        }
     return updatedCentroidsList;
+}
+
+//
+bool isConverged(Vector *centroidsList, Vector *updatedCentroidsList, int k) {
+    for (int index = 0; index < k; index++) {
+        for (int i = 0; i < centroidsList[index].dimension; i++) {
+            if (centroidsList[index].components[i] != updatedCentroidsList[index].components[i]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 // Function to create a new Vector
@@ -259,12 +265,26 @@ int main() {
 
         Vector *centroidList = initializeCentroids(vectorList, k);
         
-        for (int iter = 0; iter < 5; iter++){
-            
+        for (int iter = 0; iter < max_iter; iter++) {
+            printf("iter %d\n", iter);
+
+            // Assign vectors to the nearest centroids
             computeMinDistance(vectorList, centroidList, k, n);
+
             // Update centroids based on the assigned clusters
+            Vector *updatedCentroidsList = updateCentroids(vectorList, n, d, k);
+
+            // Check for convergence
+            if (isConverged(centroidList, updatedCentroidsList, k)) {
+                free(updatedCentroidsList);
+                break;
+            }
+
+            // Free the memory for the previous centroid list
             free(centroidList);
-            centroidList = updateCentroids(vectorList, n, d, k);
+
+            // Update the centroid list
+            centroidList = updatedCentroidsList;
         }
 
         
@@ -278,6 +298,15 @@ int main() {
             printf("Centroid %d (", i + 1);
             printVector(centroidList[i]);
         }
+
+        // Free memory allocated for vectors and centroids
+        for (int i = 0; i < n; i++) {
+            free(vectorList[i].components);
+        }
+        free(vectorList);
+        free(centroidList);
     }
+
+    
     return 0;
 }
