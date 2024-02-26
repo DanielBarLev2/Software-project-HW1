@@ -18,8 +18,15 @@ Vector* convertToVectors(const char* filename, int n, int d);
 Vector* initializeCentroids(Vector *vectorList, int k);
 void computeMinDistance(Vector *vectorList, Vector *centroids_list, int k, int n);
 Vector* updateCentroids(Vector *vectorList, int n, int d, int k);
+bool isConverged(Vector *centroidsList, Vector *updatedCentroidsList, int k);
+Vector createVector(int dimension, float *values);
+Vector add(Vector vec1, Vector vec2);
+Vector multiplyScalar(Vector vec, float scalar);
+float euclidean_distance(Vector vec1, Vector vec2);
+void printVector(Vector vec);
+void Kmeans(const char *filename, int k, int n, int d, int max_iter);
 
-// Function to validate input parameters
+// This function validates the input parameters for the k-means algorithm.
 bool testValidation(int k, int n, int d, int max_iter) {
     // Validate number of clusters
     if (!(1 < k && k < n)) {
@@ -49,8 +56,10 @@ bool testValidation(int k, int n, int d, int max_iter) {
     return true;
 }
 
-// Function to read data from data file and store it in [row][col][data, centroid]
+
+// This function reads data from a file, tokenizes each line, and stores the values as components of Vector objects.
 Vector* convertToVectors(const char* filename, int n, int d) {
+    // Open the file for reading
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file\n");
@@ -79,6 +88,7 @@ Vector* convertToVectors(const char* filename, int n, int d) {
             exit(EXIT_FAILURE);
         }
 
+        // Parse each token and store it in the components array
         while (token != NULL) {
             components[dimension++] = atof(token);
             token = strtok(NULL, ",");
@@ -91,48 +101,68 @@ Vector* convertToVectors(const char* filename, int n, int d) {
         i++;
     }
 
+    // Close the file
     fclose(file);
 
     return vectorsList;
 }
 
-// Function to get the first k vectors from the vector list
-Vector* initializeCentroids(Vector *vectorList, int k) {
-    Vector *centroidList = (Vector *)malloc(k * sizeof(Vector));
 
+// This function initializes centroids using the first k vectors from the input vector list.
+Vector* initializeCentroids(Vector *vectorList, int k) {
+    // Allocate memory for the centroid list
+    Vector *centroidList = (Vector *)malloc(k * sizeof(Vector));
+    if (centroidList == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Copy the first k vectors from the vector list to the centroid list
     for (int i = 0; i < k; i++) {
         centroidList[i].dimension = vectorList[i].dimension;
         centroidList[i].centroid = i;
+        
+        // Allocate memory for components of the centroid
         centroidList[i].components = (float *)malloc(vectorList[i].dimension * sizeof(float));
-    
+        if (centroidList[i].components == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        // Copy components from the corresponding vector
         memcpy(centroidList[i].components, vectorList[i].components, vectorList[i].dimension * sizeof(float));
     }
 
     return centroidList;
 }
 
-// Function to compute the minimum distance to all centroids
-void computeMinDistance(Vector *vectorList, Vector *centroids_list, int k, int n) {
+// This function iterates through each vector in the vector list,
+// and computes the Euclidean distance between that vector and each centroid.
+void computeMinDistance(Vector *vectorList, Vector *centroidsList, int k, int n) {
+    // Iterate through all vectors
     for (int i = 0; i < n; i++) {
-        float min_distance = INFINITY; // Reset min_distance for each vector
-        int closestCentroidIndex = -1;
+        float minDistance = INFINITY; // Initialize min distance to infinity
+        int closestCentroidIndex = -1; // Initialize closest centroid index
 
-        // Compute the minimum distance for the current vector
+        // Compute the distance from the current vector to each centroid
         for (int j = 0; j < k; j++) {
-            float distance = euclidean_distance(vectorList[i], centroids_list[j]);
-            if (distance < min_distance) {
-                min_distance = distance;
+            float distance = euclidean_distance(vectorList[i], centroidsList[j]); // Compute Euclidean distance
+            // Update min distance and closest centroid index if a closer centroid is found
+            if (distance < minDistance) {
+                minDistance = distance;
                 closestCentroidIndex = j;
             }
         }
-        // Update the centroid field of the vector
+
+        // Assign the closest centroid index to the vector
         vectorList[i].centroid = closestCentroidIndex;
     }
 }
 
-// Function to compute the mean of each vector cluster
+// This function updates the centroids based on the assigned clusters.
+//It calculates the mean of each cluster by summing all vectors' coordinates assigned to that cluster,
+// and dividing by the number of vectors in that cluster.
 Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
-
     // Allocate memory for the updated centroids list
     Vector *updatedCentroidsList = (Vector *)malloc(k * sizeof(Vector));
     if (updatedCentroidsList == NULL) {
@@ -149,8 +179,7 @@ Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
 
     // Initialize mean centroids and kNumbers
     for (int i = 0; i < k; i++) {
-        float *componantes = (float *)calloc(d, sizeof(float));
-        updatedCentroidsList[i] = createVector(d, NULL);
+        updatedCentroidsList[i] = createVector(d, NULL); // Create an empty vector
     }
 
     // Sum all vectors' coordinates
@@ -162,7 +191,7 @@ Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
         updatedCentroidsList[centroidIndex] = add(currentVector, updatedCentroidsList[centroidIndex]);
         kNumbers[centroidIndex]++;
     }
-      
+
     // Calculate the mean of each cluster
     for (int i = 0; i < k; i++) {
         if (kNumbers[i] != 0) {
@@ -170,20 +199,30 @@ Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
         }
     }
 
+    // Free memory allocated for kNumbers
+    free(kNumbers);
+
     return updatedCentroidsList;
 }
 
-//
+
+// Function to check if the cluster mean point is converged
 bool isConverged(Vector *centroidsList, Vector *updatedCentroidsList, int k) {
     for (int index = 0; index < k; index++) {
+        // Compare the components of each centroid
         for (int i = 0; i < centroidsList[index].dimension; i++) {
             if (centroidsList[index].components[i] != updatedCentroidsList[index].components[i]) {
-                return false;
+                return false; // If any component is different, return false
             }
         }
     }
-    return true;
+    return true; // All centroids are converged
 }
+
+// ###############################################################################
+// could not call the functions from my "Vector class". 
+// (header file was correctly written but still had an error of "functions not found")
+// ###############################################################################
 
 // Function to create a new Vector
 Vector createVector(int dimension, float *values) {
@@ -192,9 +231,14 @@ Vector createVector(int dimension, float *values) {
     vec.centroid = -1; // Initialize centroid to -1 (indicating not assigned)
     
     if (values == NULL)
-        vec.components = (float *)calloc(dimension, sizeof(float));
-    else{
-        vec.components = (float *)malloc(dimension * sizeof(float));
+        vec.components = (float *)calloc(dimension, sizeof(float)); // Allocate memory for components
+    else {
+        vec.components = (float *)malloc(dimension * sizeof(float)); // Allocate memory for components
+        if (vec.components == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+        // Copy values to components
         for (int i = 0; i < dimension; i++) {
             vec.components[i] = values[i];
         }
@@ -209,7 +253,8 @@ Vector add(Vector vec1, Vector vec2) {
         exit(EXIT_FAILURE);
     }
     
-    Vector result = createVector(vec1.dimension, NULL);
+    Vector result = createVector(vec1.dimension, NULL); // Create a result vector
+    // Perform addition component-wise
     for (int i = 0; i < vec1.dimension; i++) {
         result.components[i] = vec1.components[i] + vec2.components[i];
     }
@@ -218,7 +263,8 @@ Vector add(Vector vec1, Vector vec2) {
 
 // Function to perform scalar multiplication of a vector
 Vector multiplyScalar(Vector vec, float scalar) {
-    Vector result = createVector(vec.dimension, NULL);
+    Vector result = createVector(vec.dimension, NULL); // Create a result vector
+    // Perform scalar multiplication component-wise
     for (int i = 0; i < vec.dimension; i++) {
         result.components[i] = vec.components[i] * scalar;
     }
@@ -233,18 +279,20 @@ float euclidean_distance(Vector vec1, Vector vec2) {
     }
     
     float sum = 0.0;
+    // Calculate the sum of squared differences component-wise
     for (int i = 0; i < vec1.dimension; i++) {
         float diff = vec1.components[i] - vec2.components[i];
         sum += diff * diff;
     }
-    return sqrt(sum);
+    return sqrt(sum); // Return the square root of the sum
 }
 
 // Function to print a Vector
 void printVector(Vector vec) {
     printf("(");
+    // Print components
     for (int i = 0; i < vec.dimension; i++) {
-        printf("%.2f", vec.components[i]);
+        printf("%.4f", vec.components[i]);
         if (i < vec.dimension - 1) {
             printf(", ");
         }
@@ -253,60 +301,74 @@ void printVector(Vector vec) {
 }
 
 
-int main() {
-    const char *filename = "input_1.txt";
-    int  k=3, n=800, d=3, max_iter=600;
+// Function to perform K-means clustering
+void Kmeans(const char *filename, int k, int n, int d, int maxIter) {
+    // Set default value for max_iter if not provided
+    if (maxIter <= 0)
+        maxIter = 200;
 
-    bool isValid = testValidation(k, n, d, max_iter);
-
-    // If the validation succeeds, print a success message
-    if (isValid) {
-        Vector *vectorList = convertToVectors(filename, n, d);
-
-        Vector *centroidList = initializeCentroids(vectorList, k);
-        
-        for (int iter = 0; iter < max_iter; iter++) {
-            printf("iter %d\n", iter);
-
-            // Assign vectors to the nearest centroids
-            computeMinDistance(vectorList, centroidList, k, n);
-
-            // Update centroids based on the assigned clusters
-            Vector *updatedCentroidsList = updateCentroids(vectorList, n, d, k);
-
-            // Check for convergence
-            if (isConverged(centroidList, updatedCentroidsList, k)) {
-                free(updatedCentroidsList);
-                break;
-            }
-
-            // Free the memory for the previous centroid list
-            free(centroidList);
-
-            // Update the centroid list
-            centroidList = updatedCentroidsList;
-        }
-
-        
-        // Final print
-        for (int i = 0; i < 10; i++) {
-            printf("Vector %d (Centroid %d): (", i + 1, vectorList[i].centroid);
-            printVector(vectorList[i]);
-        }
-
-        for (int i = 0; i < k; i++) {
-            printf("Centroid %d (", i + 1);
-            printVector(centroidList[i]);
-        }
-
-        // Free memory allocated for vectors and centroids
-        for (int i = 0; i < n; i++) {
-            free(vectorList[i].components);
-        }
-        free(vectorList);
-        free(centroidList);
+    // Validate input parameters
+    bool isValid = testValidation(k, n, d, maxIter);
+    if (!isValid) {
+        fprintf(stderr, "Input parameters validation failed\n");
+        exit(EXIT_FAILURE);
     }
 
-    
+    // Read vectors from file
+    Vector *vectorList = convertToVectors(filename, n, d);
+
+    // Initialize centroids
+    Vector *centroidList = initializeCentroids(vectorList, k);
+
+   
+
+    // Perform K-means iterations
+    for (int iter = 0; iter < maxIter; iter++) {
+        printf("iter %d\n", iter);
+
+        // Assign vectors to the nearest centroids
+        computeMinDistance(vectorList, centroidList, k, n);
+
+        // Update centroids based on the assigned clusters
+        Vector *updatedCentroidsList = updateCentroids(vectorList, n, d, k);
+
+        // Check for convergence
+        if (isConverged(centroidList, updatedCentroidsList, k)) {
+            free(updatedCentroidsList);
+            break;
+        }
+
+        // Free memory for the previous centroid list
+        free(centroidList);
+
+        // Update the centroid list
+        centroidList = updatedCentroidsList;
+    }
+
+    // Print final centroids
+    for (int i = 0; i < k; i++) {
+        printf("Centroid %d (", i + 1);
+        printVector(centroidList[i]);
+    }  
+    printf("\n");
+
+    // Free memory allocated for vectors and centroids
+    for (int i = 0; i < n; i++) {
+        free(vectorList[i].components);
+    }
+    free(vectorList);
+    free(centroidList);
+}
+
+// Main function
+int main(const char *filename,int k, int n,int d, int maxIter) {
+    // Perform K-means clustering
+    // ### from inputs
+    // Kmeans("input_1.txt", 3, 800, 3, 600);
+    // Kmeans("input_2.txt", 7, 430, 11, 0);
+    // Kmeans("input_3.txt", 15, 5000, 5, 300);
+
+    Kmeans(filename, k, n, d, maxIter);
+
     return 0;
 }
