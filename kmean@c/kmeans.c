@@ -3,7 +3,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "vector.h" // Include the Vector header file
+#include "vector.h"
+#include "vector.c"
 
 #define MAX_ROW_LEN 512
 
@@ -19,12 +20,6 @@ Vector* initializeCentroids(Vector *vectorList, int k);
 void computeMinDistance(Vector *vectorList, Vector *centroids_list, int k, int n);
 Vector* updateCentroids(Vector *vectorList, int n, int d, int k);
 bool isConverged(Vector *centroidsList, Vector *updatedCentroidsList, int k);
-Vector createVector(int dimension, float *values);
-Vector add(Vector vec1, Vector vec2);
-Vector multiplyScalar(Vector vec, float scalar);
-float euclidean_distance(Vector vec1, Vector vec2);
-void printVector(Vector vec);
-void Kmeans(const char *filename, int k, int n, int d, int max_iter);
 
 // This function validates the input parameters for the k-means algorithm.
 bool testValidation(int k, int n, int d, int max_iter) {
@@ -81,7 +76,7 @@ Vector* convertToVectors(const char* filename, int n, int d) {
         // Tokenize the line
         char *token = strtok(line, ",");
         int dimension = 0;
-        float *components = (float *)malloc(d * sizeof(float)); 
+        double *components = (double *)malloc(d * sizeof(double)); 
 
         if (components == NULL) {
             fprintf(stderr, "Memory allocation failed\n");
@@ -123,14 +118,14 @@ Vector* initializeCentroids(Vector *vectorList, int k) {
         centroidList[i].centroid = i;
         
         // Allocate memory for components of the centroid
-        centroidList[i].components = (float *)malloc(vectorList[i].dimension * sizeof(float));
+        centroidList[i].components = (double *)malloc(vectorList[i].dimension * sizeof(double));
         if (centroidList[i].components == NULL) {
             fprintf(stderr, "Memory allocation failed\n");
             exit(EXIT_FAILURE);
         }
         
         // Copy components from the corresponding vector
-        memcpy(centroidList[i].components, vectorList[i].components, vectorList[i].dimension * sizeof(float));
+        memcpy(centroidList[i].components, vectorList[i].components, vectorList[i].dimension * sizeof(double));
     }
 
     return centroidList;
@@ -141,12 +136,12 @@ Vector* initializeCentroids(Vector *vectorList, int k) {
 void computeMinDistance(Vector *vectorList, Vector *centroidsList, int k, int n) {
     // Iterate through all vectors
     for (int i = 0; i < n; i++) {
-        float minDistance = INFINITY; // Initialize min distance to infinity
+        double minDistance = INFINITY; // Initialize min distance to infinity
         int closestCentroidIndex = -1; // Initialize closest centroid index
 
         // Compute the distance from the current vector to each centroid
         for (int j = 0; j < k; j++) {
-            float distance = euclidean_distance(vectorList[i], centroidsList[j]); // Compute Euclidean distance
+            double distance = euclidean_distance(vectorList[i], centroidsList[j]); // Compute Euclidean distance
             // Update min distance and closest centroid index if a closer centroid is found
             if (distance < minDistance) {
                 minDistance = distance;
@@ -171,7 +166,7 @@ Vector* updateCentroids(Vector *vectorList, int n, int d, int k) {
     }
 
     // Allocate memory for keeping track of the number of vectors in each cluster
-    float *kNumbers = (float *)calloc(k, sizeof(float));
+    double *kNumbers = (double *)calloc(k, sizeof(double));
     if (kNumbers == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
@@ -218,88 +213,6 @@ bool isConverged(Vector *centroidsList, Vector *updatedCentroidsList, int k) {
     }
     return true; // All centroids are converged
 }
-
-// ###############################################################################
-// could not call the functions from my "Vector class". 
-// (header file was correctly written but still had an error of "functions not found")
-// ###############################################################################
-
-// Function to create a new Vector
-Vector createVector(int dimension, float *values) {
-    Vector vec;
-    vec.dimension = dimension;
-    vec.centroid = -1; // Initialize centroid to -1 (indicating not assigned)
-    
-    if (values == NULL)
-        vec.components = (float *)calloc(dimension, sizeof(float)); // Allocate memory for components
-    else {
-        vec.components = (float *)malloc(dimension * sizeof(float)); // Allocate memory for components
-        if (vec.components == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
-            exit(EXIT_FAILURE);
-        }
-        // Copy values to components
-        for (int i = 0; i < dimension; i++) {
-            vec.components[i] = values[i];
-        }
-    }
-    return vec;
-}
-
-// Function to perform vector addition
-Vector add(Vector vec1, Vector vec2) {
-    if (vec1.dimension != vec2.dimension) {
-        fprintf(stderr, "Vectors must have the same dimension for addition\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    Vector result = createVector(vec1.dimension, NULL); // Create a result vector
-    // Perform addition component-wise
-    for (int i = 0; i < vec1.dimension; i++) {
-        result.components[i] = vec1.components[i] + vec2.components[i];
-    }
-    return result;
-}
-
-// Function to perform scalar multiplication of a vector
-Vector multiplyScalar(Vector vec, float scalar) {
-    Vector result = createVector(vec.dimension, NULL); // Create a result vector
-    // Perform scalar multiplication component-wise
-    for (int i = 0; i < vec.dimension; i++) {
-        result.components[i] = vec.components[i] * scalar;
-    }
-    return result;
-}
-
-// Function to calculate the Euclidean distance between two vectors
-float euclidean_distance(Vector vec1, Vector vec2) {
-    if (vec1.dimension != vec2.dimension) {
-        fprintf(stderr, "Vectors must have the same dimension for calculating Euclidean distance\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    float sum = 0.0;
-    // Calculate the sum of squared differences component-wise
-    for (int i = 0; i < vec1.dimension; i++) {
-        float diff = vec1.components[i] - vec2.components[i];
-        sum += diff * diff;
-    }
-    return sqrt(sum); // Return the square root of the sum
-}
-
-// Function to print a Vector
-void printVector(Vector vec) {
-    printf("(");
-    // Print components
-    for (int i = 0; i < vec.dimension; i++) {
-        printf("%.4f", vec.components[i]);
-        if (i < vec.dimension - 1) {
-            printf(", ");
-        }
-    }
-    printf(")\n");
-}
-
 
 // Function to perform K-means clustering
 void Kmeans(const char *filename, int k, int n, int d, int maxIter) {
@@ -360,15 +273,34 @@ void Kmeans(const char *filename, int k, int n, int d, int maxIter) {
     free(centroidList);
 }
 
-// Main function
-int main(const char *filename,int k, int n,int d, int maxIter) {
-    // Perform K-means clustering
+// Main function; Perform K-means clustering
+int main() {
     // ### from inputs
     // Kmeans("input_1.txt", 3, 800, 3, 600);
     // Kmeans("input_2.txt", 7, 430, 11, 0);
     // Kmeans("input_3.txt", 15, 5000, 5, 300);
 
-    Kmeans(filename, k, n, d, maxIter);
+    char filename[100];
+    int k, n, d, maxIter;
 
+    // Prompt user to enter inputs
+    printf("Enter filename: ");
+    scanf("%s", filename);
+
+    printf("Enter value of k: ");
+    scanf("%d", &k);
+
+    printf("Enter value of n: ");
+    scanf("%d", &n);
+
+    printf("Enter value of d: ");
+    scanf("%d", &d);
+
+    printf("Enter value of maxIter: ");
+    scanf("%d", &maxIter);
+
+    // Call Kmeans function with user-provided inputs
+    Kmeans(filename, k, n, d, maxIter);
+    
     return 0;
 }
